@@ -42,9 +42,9 @@ public class UseJsoupLinkListGetter {
 			
 			//用jsoup解析http
 			Document doc = Jsoup.connect(url).timeout(20000).get();
-			
 			//要先判断输入的网址页面是聚划算的分类页面还是品牌团的某个品牌页面
-			if(doc.select("div[class][id][data-url]").first()==null){//如果是聚划算的分类页面
+			if(doc.select("div[class][id][data-url]").first()==null&&doc.select("div[class][id][data-ajaxurl]").first()==null){//如果是聚划算的分类页面
+				Element asasas=doc.select("div[class][id][data-url]").first();
 				String ajaxurl=doc.select("div[class^=l-floor]").first().attr("data-ajaxurl");
 				
 				//用httpclient获得ajax返回的json内容
