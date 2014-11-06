@@ -20,6 +20,11 @@ public class UseJsoupParser {
 	private String type;
 	private String startTime;
 	private String endTime;
+	private String status;
+
+
+
+
 	private String picture;
 	private String link;
 	private String updateTime;
@@ -30,21 +35,37 @@ public class UseJsoupParser {
 		  type="已买";
 		  startTime="";
 		  endTime="";
+		  companyName="";
+		  status="";
 	}
 	
 	public void praseLink(LinkDetails linkDetails){
 		try{
-			  numberOfPeople=linkDetails.getNumberOfPeople();
 			  link=linkDetails.getLink();
 			  productId=linkDetails.getLink().substring(linkDetails.getLink().indexOf("item_id")+"item_id".length()+1,
 					  linkDetails.getLink().indexOf("&"));
 			  System.out.println(link);
 			  Document doc=Jsoup.connect(linkDetails.getLink()).timeout(5000).get();
+			  
+			  numberOfPeople=linkDetails.getNumberOfPeople();
+			  if(doc.select("span[class^=sold]").first()!=null){
+				  numberOfPeople=Integer.valueOf(doc.select("span[class^=sold]").first().select("span.num").text());
+			  }
+			  
 			  if(doc.select("h2.name").first()!=null){
 				  productName=doc.select("h2.name").first().text();	
 				  shopName=doc.select("div.con").first().text();
-				  companyName=doc.select("div.con").get(2).text();
-				  price=Double.valueOf(doc.select("div[data-itemprice]").first().attr("data-itemprice"));
+				  
+				  if(doc.select("div.field").get(2).select("div.term").first().text().startsWith("公司名")){
+					  companyName=doc.select("div.field").get(2).select("div.con").first().text();
+				  }
+				  
+				  if(doc.select("div[data-itemprice]").first()!=null){
+					  price=Double.valueOf(doc.select("div[data-itemprice]").first().attr("data-itemprice"));  
+				  }else{
+					  price=Double.valueOf(doc.select("span[class^=currentPrice]").first().text().substring(1));  
+				  }
+				  
 				  if(doc.select("div.back-price").first()!=null){
 					  String priceStr=doc.select("div.back-price").first().select("em").text();
 					  price=Double.valueOf(priceStr.substring(1,priceStr.length()));
@@ -210,7 +231,13 @@ public class UseJsoupParser {
 		this.endTime = endTime;
 	}
 
+	public String getStatus() {
+		return status;
+	}
 
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
 	public String getPicture() {
 		return picture;

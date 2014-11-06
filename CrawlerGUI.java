@@ -16,6 +16,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -309,6 +310,7 @@ public class CrawlerGUI extends javax.swing.JFrame {
              */
             try{
                 ArrayList<LinkDetails> linkList=(new UseJsoupLinkListGetter(jTextField1.getText())).getLinkList(); 
+                UseJsoupParser parser=new UseJsoupParser();
                 System.out.println(linkList.size());
                 
                 //连接数据
@@ -322,25 +324,60 @@ public class CrawlerGUI extends javax.swing.JFrame {
     			if(!rsTables.next()){//不存在则新建表
     				String sqlCreate="create table "+jTextField3.getText().trim()+"(productId Text,productName Text,shopName Text,"
     						+ "companyName Text,price Double,origPrice Double,discount Double,numberOfPeople Integer,"
-    						+ "type Text,startTime Text,endTime Text,picture Text,link Text,updateTime Text,"
+    						+ "type Text,startTime Text,endTime Text,status Text,picture Text,link Text,updateTime Text,"
     						+ "primary key(productId,startTime,endTime))";
     				PreparedStatement ppstCreate=conn.prepareStatement(sqlCreate);
     				ppstCreate.executeUpdate();
     				ppstCreate.close();
-    			}    			
-    			rsTables.close();
-    			
+    			}else{//若存在，则将数据库中的一些已经团购结束了的产品的购买人数更新(先获取他们的时间，判断时间是否小于现在时间)
+    				String sqlGetAllRecords="select * from "+jTextField3.getText().trim()+" order by endTime asc";
+    				PreparedStatement ppstGetAllRecords=conn.prepareStatement(sqlGetAllRecords);
+    				ResultSet rsAllRecords=ppstGetAllRecords.executeQuery();
+    				
+    				String sqlUpdate="update "+jTextField3.getText().trim()+" set price=?,numberOfPeople=?,"
+							+ "type=?,status=?,updateTime=? where productId=? and startTime=? and endTime=?";				
+					PreparedStatement ppstUpdate=conn.prepareStatement(sqlUpdate);
+    				a:while(rsAllRecords.next()){
+    					String status=rsAllRecords.getString("status");
+    					String endTime=rsAllRecords.getString("endTime");
+    					Long endTimeInt=Long.valueOf(endTime.replace("-", "").replace(":", "").replace(" ", ""));
+    					DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    					String updateTime=formatter.format(new Date());
+    					Long updateTimeInt=Long.valueOf(updateTime.replace("-", "").replace(":", "").replace(" ", ""));
+    					if(status==null||!status.equals("完成")||status.equals("")){
+	    					if(endTimeInt<updateTimeInt){//时间小于当前时间，则更新price,numberOfPeople,type,status,updateTime
+	    						String link=rsAllRecords.getString("link");
+	    						int numberOfPeople=rsAllRecords.getInt("numberOfPeople");
+	    						parser.praseLink(new LinkDetails(link,numberOfPeople));
+                    			ppstUpdate.setDouble(1, parser.getPrice());
+                        		ppstUpdate.setInt(2, parser.getNumberOfPeople());
+                        		ppstUpdate.setString(3, "已买");
+                        		ppstUpdate.setString(4, "完成");
+                        		ppstUpdate.setString(5, updateTime);
+                        		ppstUpdate.setString(6, parser.getProductId());
+                        		ppstUpdate.setString(7, rsAllRecords.getString("startTime"));
+                        		ppstUpdate.setString(8, endTime);
+                        		ppstUpdate.execute();
+	    						jTextArea1.append("\n"+"更新数据 (人数) "+link);
+	    					}else
+	    						break a;
+    					}
+    				}
+					ppstUpdate.close();
+    				rsAllRecords.close();
+				}
+				rsTables.close();  			
+			
             	String sqlQuery="select * from "+jTextField3.getText().trim()+" where productId=? and startTime=? and endTime=?";
             	String sqlUpdate="update "+jTextField3.getText().trim()+" set price=?,numberOfPeople=?,updateTime=? where productId=? and startTime=? and endTime=?";
             	String sqlInsert="insert into "+jTextField3.getText().trim()+"(productId,productName,shopName,companyName,price,origPrice,"
-            			+ "discount,numberOfPeople,type,startTime,endTime,picture,link,updateTime) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            			+ "discount,numberOfPeople,type,startTime,endTime,status,picture,link,updateTime) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
             	ResultSet rs;
             	PreparedStatement ppstQuery=conn.prepareStatement(sqlQuery);
             	PreparedStatement ppstUpdate=conn.prepareStatement(sqlUpdate);
             	PreparedStatement ppstInsert=conn.prepareStatement(sqlInsert);
                 for(LinkDetails linkDetails:linkList){
 //                	System.out.println(linkDetails.getLink());
-                	UseJsoupParser parser=new UseJsoupParser();
                 	parser.praseLink(linkDetails);
                 	if(parser.getProductName()!=null){
                 		ppstQuery.setString(1, parser.getProductId());
@@ -381,9 +418,10 @@ public class CrawlerGUI extends javax.swing.JFrame {
                     		ppstInsert.setString(9, parser.getType());
                     		ppstInsert.setString(10, parser.getStartTime());
                     		ppstInsert.setString(11, parser.getEndTime());
-                    		ppstInsert.setString(12, parser.getPicture());
-                    		ppstInsert.setString(13, parser.getLink());
-                    		ppstInsert.setString(14, parser.getUpdateTime());
+                    		ppstInsert.setString(12, parser.getStatus());
+                    		ppstInsert.setString(13, parser.getPicture());
+                    		ppstInsert.setString(14, parser.getLink());
+                    		ppstInsert.setString(15, parser.getUpdateTime());
                     		ppstInsert.execute();
                     	}
                     	rs.close();
@@ -395,19 +433,19 @@ public class CrawlerGUI extends javax.swing.JFrame {
                 conn.close();
                 jTextArea1.append("\n"+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date()))+" 抓取完成！");
             }catch(SQLException e){
-            	jTextArea1.append("\n"+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date()))+"出现异常："+"“"+e.getMessage()+"”");
-            	if(e.getMessage().equals("[Microsoft][ODBC 驱动程序管理器] 无效的字符串或缓冲区长度")){
-            		jTextArea1.append("\n"+"抓取中断，请重新点击“开始抓取”！");
-            	}else if(e.getMessage().equals("[Microsoft][ODBC 驱动程序管理器] 未发现数据源名称并且未指定默认驱动程序")){
-            		jTextArea1.append("\n"+"驱动异常，请确认安装好Access以及其对应JDBC驱动，或与开发人员联系！");
-            	}
-            	else{
-            		jTextArea1.append("\n"+"请输入正确的数据库位置和名称！");
-            	}
+//            	jTextArea1.append("\n"+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date()))+"出现异常："+"“"+e.getMessage()+"”");
+//            	if(e.getMessage().equals("[Microsoft][ODBC 驱动程序管理器] 无效的字符串或缓冲区长度")){
+//            		jTextArea1.append("\n"+"抓取中断，请重新点击“开始抓取”！");
+//            	}else if(e.getMessage().equals("[Microsoft][ODBC 驱动程序管理器] 未发现数据源名称并且未指定默认驱动程序")){
+//            		jTextArea1.append("\n"+"驱动异常，请确认安装好Access以及其对应JDBC驱动，或与开发人员联系！");
+//            	}
+//            	else{
+//            		jTextArea1.append("\n"+"请输入正确的数据库位置和名称！");
+//            	}
+            	e.printStackTrace();
             }catch(ClassNotFoundException e){
             	jTextArea1.append("\n"+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((new Date()))+"出现异常："+"“"+e.getMessage()+"”"+"\n"+"未找到驱动!!!");
             }
-            
         }
     }                                        
 
