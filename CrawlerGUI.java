@@ -340,7 +340,13 @@ public class CrawlerGUI extends javax.swing.JFrame {
     				a:while(rsAllRecords.next()){
     					String status=rsAllRecords.getString("status");
     					String endTime=rsAllRecords.getString("endTime");
-    					Long endTimeInt=Long.valueOf(endTime.replace("-", "").replace(":", "").replace(" ", ""));
+    					Long endTimeInt;
+    					if(!endTime.equals("")){
+    						endTimeInt=Long.valueOf(endTime.replace("-", "").replace(":", "").replace(" ", "").trim());
+    					}else{
+    						String startTime=rsAllRecords.getString("startTime");
+    						endTimeInt=Long.valueOf(startTime.replace("-", "").replace(":", "").replace(" ", "").trim());
+    					}
     					DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     					String updateTime=formatter.format(new Date());
     					Long updateTimeInt=Long.valueOf(updateTime.replace("-", "").replace(":", "").replace(" ", ""));
