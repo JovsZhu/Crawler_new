@@ -340,11 +340,11 @@ public class CrawlerGUI extends javax.swing.JFrame {
     				a:while(rsAllRecords.next()){
     					String status=rsAllRecords.getString("status");
     					String endTime=rsAllRecords.getString("endTime");
+    					String startTime=rsAllRecords.getString("startTime");
     					Long endTimeInt;
-    					if(!endTime.equals("")){
+    					if(!endTime.equals("")&&!endTime.equals("已结束")){
     						endTimeInt=Long.valueOf(endTime.replace("-", "").replace(":", "").replace(" ", "").trim());
     					}else{
-    						String startTime=rsAllRecords.getString("startTime");
     						endTimeInt=Long.valueOf(startTime.replace("-", "").replace(":", "").replace(" ", "").trim());
     					}
     					DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -361,7 +361,7 @@ public class CrawlerGUI extends javax.swing.JFrame {
                         		ppstUpdate.setString(4, "完成");
                         		ppstUpdate.setString(5, updateTime);
                         		ppstUpdate.setString(6, parser.getProductId());
-                        		ppstUpdate.setString(7, rsAllRecords.getString("startTime"));
+                        		ppstUpdate.setString(7, startTime);
                         		ppstUpdate.setString(8, endTime);
                         		ppstUpdate.execute();
 	    						jTextArea1.append("\n"+"更新数据 (人数) "+link);

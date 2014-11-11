@@ -45,16 +45,16 @@ public class UseJsoupParser {
 			  productId=linkDetails.getLink().substring(linkDetails.getLink().indexOf("item_id")+"item_id".length()+1,
 					  linkDetails.getLink().indexOf("&"));
 			  System.out.println(link);
-			  Document doc=Jsoup.connect(linkDetails.getLink()).timeout(5000).get();
-			  
-			  numberOfPeople=linkDetails.getNumberOfPeople();
-			  if(doc.select("span[class^=sold]").first()!=null){
-				  numberOfPeople=Integer.valueOf(doc.select("span[class^=sold]").first().select("span.num").text());
-			  }
+			  Document doc=Jsoup.connect(linkDetails.getLink()).timeout(5000).get();			  
+			  numberOfPeople=linkDetails.getNumberOfPeople();			 
 			  
 			  if(doc.select("h2.name").first()!=null){
 				  productName=doc.select("h2.name").first().text();	
 				  shopName=doc.select("div.con").first().text();
+				  
+				  if(doc.select("span[class^=sold]").first()!=null){
+					  numberOfPeople=Integer.valueOf(doc.select("span[class^=sold]").first().select("span.num").text());
+				  }
 				  
 				  if(doc.select("div.field").get(2).select("div.term").first().text().startsWith("¹«Ë¾Ãû")){
 					  companyName=doc.select("div.field").get(2).select("div.con").first().text();
