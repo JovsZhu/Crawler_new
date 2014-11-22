@@ -310,8 +310,6 @@ public class CrawlerGUI extends javax.swing.JFrame {
              */
             try{
                 ArrayList<LinkDetails> linkList=(new UseJsoupLinkListGetter(jTextField1.getText())).getLinkList(); 
-                UseJsoupParser parser=new UseJsoupParser();
-                System.out.println(linkList.size());
                 
                 //连接数据
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
@@ -340,33 +338,31 @@ public class CrawlerGUI extends javax.swing.JFrame {
     				a:while(rsAllRecords.next()){
     					String status=rsAllRecords.getString("status");
     					String endTime=rsAllRecords.getString("endTime");
-    					String startTime=rsAllRecords.getString("startTime");
     					Long endTimeInt;
     					if(!endTime.equals("")&&!endTime.equals("已结束")){
     						endTimeInt=Long.valueOf(endTime.replace("-", "").replace(":", "").replace(" ", "").trim());
-    					}else{
-    						endTimeInt=Long.valueOf(startTime.replace("-", "").replace(":", "").replace(" ", "").trim());
-    					}
-    					DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    					String updateTime=formatter.format(new Date());
-    					Long updateTimeInt=Long.valueOf(updateTime.replace("-", "").replace(":", "").replace(" ", ""));
-    					if(status==null||!status.equals("完成")||status.equals("")){
-	    					if(endTimeInt<updateTimeInt){//时间小于当前时间，则更新price,numberOfPeople,type,status,updateTime
-	    						String link=rsAllRecords.getString("link");
-	    						int numberOfPeople=rsAllRecords.getInt("numberOfPeople");
-	    						parser.praseLink(new LinkDetails(link,numberOfPeople));
-                    			ppstUpdate.setDouble(1, parser.getPrice());
-                        		ppstUpdate.setInt(2, parser.getNumberOfPeople());
-                        		ppstUpdate.setString(3, "已买");
-                        		ppstUpdate.setString(4, "完成");
-                        		ppstUpdate.setString(5, updateTime);
-                        		ppstUpdate.setString(6, parser.getProductId());
-                        		ppstUpdate.setString(7, startTime);
-                        		ppstUpdate.setString(8, endTime);
-                        		ppstUpdate.execute();
-	    						jTextArea1.append("\n"+"更新数据 (人数) "+link);
-	    					}else
-	    						break a;
+    						
+    						DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        					String updateTime=formatter.format(new Date());
+        					Long updateTimeInt=Long.valueOf(updateTime.replace("-", "").replace(":", "").replace(" ", ""));
+        					if(status==null||!status.equals("完成")||status.equals("")){
+    	    					if(endTimeInt<updateTimeInt){//时间小于当前时间，则更新price,numberOfPeople,type,status,updateTime
+    	    						String link=rsAllRecords.getString("link");
+    	    						int numberOfPeople=rsAllRecords.getInt("numberOfPeople");
+    	    						UseJsoupParser parser=new UseJsoupParser();
+    	    						parser.praseLink(new LinkDetails(link,numberOfPeople));
+                        			ppstUpdate.setDouble(1, parser.getPrice());
+                            		ppstUpdate.setInt(2, parser.getNumberOfPeople());
+                            		ppstUpdate.setString(3, "已买");
+                            		ppstUpdate.setString(4, "完成");
+                            		ppstUpdate.setString(5, updateTime);
+                            		ppstUpdate.setString(6, parser.getProductId());
+                            		ppstUpdate.setString(7, rsAllRecords.getString("startTime"));
+                            		ppstUpdate.setString(8, endTime);
+                            		ppstUpdate.execute();
+    	    						jTextArea1.append("\n"+"更新数据 (人数) "+link);
+    	    					}
+        					}
     					}
     				}
 					ppstUpdate.close();
@@ -374,6 +370,8 @@ public class CrawlerGUI extends javax.swing.JFrame {
 				}
 				rsTables.close();  			
 			
+				
+				System.out.println("确认完成操作结束，进入下一步，获得链接数："+linkList.size());
             	String sqlQuery="select * from "+jTextField3.getText().trim()+" where productId=? and startTime=? and endTime=?";
             	String sqlUpdate="update "+jTextField3.getText().trim()+" set price=?,numberOfPeople=?,updateTime=? where productId=? and startTime=? and endTime=?";
             	String sqlInsert="insert into "+jTextField3.getText().trim()+"(productId,productName,shopName,companyName,price,origPrice,"
@@ -384,6 +382,7 @@ public class CrawlerGUI extends javax.swing.JFrame {
             	PreparedStatement ppstInsert=conn.prepareStatement(sqlInsert);
                 for(LinkDetails linkDetails:linkList){
 //                	System.out.println(linkDetails.getLink());
+                	UseJsoupParser parser=new UseJsoupParser();
                 	parser.praseLink(linkDetails);
                 	if(parser.getProductName()!=null){
                 		ppstQuery.setString(1, parser.getProductId());
