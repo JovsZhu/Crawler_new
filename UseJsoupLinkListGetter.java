@@ -58,7 +58,7 @@ public class UseJsoupLinkListGetter {
 	            for(int i=0;i<itemList.length();i++){
 	            	itemId=itemList.getJSONObject(i).getJSONObject("baseinfo").getString("itemId");
 	            	juId=itemList.getJSONObject(i).getJSONObject("baseinfo").getString("juId");
-	            	link="http://detail.ju.taobao.com/home.htm?item_id="+itemId+"&id="+juId;
+	            	link="http://detail.ju.taobao.com/home.htm?id="+juId+"&item_id="+itemId;
 	            	if(itemList.getJSONObject(i).getJSONObject("baseinfo").getString("itemStatus").equals("avil")){
 	            		number=Integer.valueOf(itemList.getJSONObject(i).getJSONObject("remind").getString("soldCount"));
 	            	}else{

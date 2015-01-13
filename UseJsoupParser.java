@@ -42,8 +42,7 @@ public class UseJsoupParser {
 	public void praseLink(LinkDetails linkDetails){
 		try{
 			  link=linkDetails.getLink();
-			  productId=linkDetails.getLink().substring(linkDetails.getLink().indexOf("item_id")+"item_id".length()+1,
-					  linkDetails.getLink().indexOf("&"));
+			  productId=linkDetails.getLink().substring(linkDetails.getLink().indexOf("item_id")+"item_id".length()+1);
 			  System.out.println(link);
 			  Document doc=Jsoup.connect(linkDetails.getLink()).timeout(5000).get();			  
 			  numberOfPeople=linkDetails.getNumberOfPeople();			 
