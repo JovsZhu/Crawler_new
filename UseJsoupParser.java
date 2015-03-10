@@ -35,7 +35,7 @@ public class UseJsoupParser {
 		  type="已买";
 		  startTime="";
 		  endTime="";
-		  companyName="";
+		  companyName=" ";
 		  status="";
 	}
 	
@@ -47,33 +47,29 @@ public class UseJsoupParser {
 			  Document doc=Jsoup.connect(linkDetails.getLink()).timeout(5000).get();			  
 			  numberOfPeople=linkDetails.getNumberOfPeople();			 
 			  
-			  if(doc.select("h2.name").first()!=null){
-				  productName=doc.select("h2.name").first().text();	
-				  shopName=doc.select("div.con").first().text();
+			  if(doc.select("h2.title").first()!=null){
+				  productName=doc.select("h2.title").first().text();
+				  shopName=doc.select("a.sellername").text();
 				  
 				  if(doc.select("span[class^=sold]").first()!=null){
 					  numberOfPeople=Integer.valueOf(doc.select("span[class^=sold]").first().select("span.num").text());
 				  }
 				  
-				  if(doc.select("div.field").get(2).select("div.term").first().text().startsWith("公司名")){
-					  companyName=doc.select("div.field").get(2).select("div.con").first().text();
-				  }
-				  
-				  if(doc.select("div[data-itemprice]").first()!=null){
-					  price=Double.valueOf(doc.select("div[data-itemprice]").first().attr("data-itemprice"));  
+				  if(doc.select("a[data-itemprice]").first()!=null){
+					  price=Double.valueOf(doc.select("a[data-itemprice]").first().attr("data-itemprice"));  
 				  }else{
-					  price=Double.valueOf(doc.select("span[class^=currentPrice]").first().text().substring(1));  
+					  price=Double.valueOf(doc.select("div.currentPrice").first().text());  
 				  }
 				  
 				  if(doc.select("div.back-price").first()!=null){
 					  String priceStr=doc.select("div.back-price").first().select("em").text();
 					  price=Double.valueOf(priceStr.substring(1,priceStr.length()));
 				  }
-				  if(doc.select("div[data-originalprice]").first()!=null){
-					  origPrice=Double.valueOf(doc.select("div[data-originalprice]").first().attr("data-originalprice"));
+				  if(doc.select("a[data-originalprice]").first()!=null){
+					  origPrice=Double.valueOf(doc.select("a[data-originalprice]").first().attr("data-originalprice"));
 				  }	
-				  if(doc.select("div[data-polldiscount]").first()!=null){
-					  discount=Double.valueOf(doc.select("div[data-polldiscount]").first().attr("data-polldiscount")); 
+				  if(doc.select("a[data-polldiscount]").first()!=null){
+					  discount=Double.valueOf(doc.select("a[data-polldiscount]").first().attr("data-polldiscount")); 
 				  }				  
 				  DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				  updateTime=formatter.format(new Date());
